@@ -32,20 +32,8 @@ unsigned long lastSendPacketTime = 0;
 // キャラクタLCDクラス（RS=>7, E=>6, D4=>5, D5=>4, D4=>3, D3=>2)
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
-int lightValue = 0;
-int mode = 0;
-int ledValue = 0;
-int intervalTime = 0;
-
-int ledPin = 13;
-int lightPin = A0;
-int lightGND = 18;
-
-int hour_value;
-int minute_value;
-
-// the setup function runs once when you press reset or power the board
-void setup() {
+void setup() 
+{
   Serial.begin(115200);
   Serial.println("Attempting to obtain a DHCP lease...");
 
@@ -54,6 +42,8 @@ void setup() {
 
   if ( Ethernet.begin(mac) == 0 ) {
     Serial.println("Failed to configure Ethernet using DHCP");
+    for(;;)
+      ;
   }
 
   Serial.println("A DHCP lease has been obtained.");
@@ -73,16 +63,10 @@ void setup() {
   // 最初の時刻リクエストを送信
   sendNTPpacket(timeServer);
   lastSendPacketTime = millis();
-  
-  pinMode(ledPin, OUTPUT);
-  pinMode(lightGND, OUTPUT);
-
-  digitalWrite(lightGND, HIGH);
-  Serial.begin(9600);
 }
 
-// the loop function runs over and over again forever
-void loop() {
+void loop()
+{
   if ( millis() - lastSendPacketTime > 180000 ){
     // NTPサーバへ時刻リクエストを送信
     sendNTPpacket(timeServer);
@@ -132,37 +116,23 @@ void loop() {
     Serial.print(':'); 
     Serial.println(second());
     Serial.println();
-  }
 
-  
-  lightValue = analogRead(lightPin); // read pin's data
-
-  Serial.println(lightValue);
-  Serial.println(ledValue);
-
-  hour_value = hour();
-  minute_value = minute();
-  
-  // 18時を超えたら管理モードに移る
-  if ( hour_value > 18 && mode == 0) {
-    mode = 1;
-    ledValue = 255;
-  }
-  // 管理モード時、だんだんLEDを暗くする
-  if (mode == 1) {
-    analogWrite(ledPin, ledValue);
-    if (ledValue > 0) {
-      ledValue -= 10;
-    } else {
-      ledValue = 0;
-    }
-    intervalTime += 1;
-  }
-  delay(1000);
-  // 再生開始から300秒経ったら通常モードに戻る
-  if (intervalTime > 300) {
-    intervalTime = 0;
-    mode = 0;
+    // LCDクリア
+    lcd.clear();
+    // 年/月/日を表示
+    lcd.print(year());
+    lcd.print('/');
+    lcd.print(month());
+    lcd.print('/');
+    lcd.print(day());
+    // 2行目３文字目にカーソルを移動
+    lcd.setCursor(2, 1);
+    // 時:分:秒を表示
+    lcd.print(hour());
+    lcd.print(':'); 
+    lcd.print(minute());
+    lcd.print(':'); 
+    lcd.print(second());
   }
 }
 
